@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -e
+
+image=bankmon
+squashed=${image}:squashed
+host=bankmon
+bin=bankmon-linux
+container=bankmon
+
+die() {
+  echo $@ >&2
+  exit 1
+}
+
+echo "building $bin"
+GOOS=linux GOARCH=amd64 go build -o $bin
+
+echo "building image"
+docker build -t ${image} . > /dev/null
+
+echo "squashing image"
+docker rmi ${squashed} &> /dev/null || true
+docker-squash -t ${squashed} ${image} &> /dev/null
+size=`docker images ${squashed} --format "{{.Size}}"`
+test -n "$size" || die "docker-squash failed"
+docker images ${squashed}
+
+# See https://github.com/docker/go-units/blob/master/size.go
+pv="pv"
+size=`echo '
+  n, u = ARGV.fetch(0) =~ /(\d|\d.*\d)\s*([a-z]?)B/i ? [$1, $2] : exit(1)
+  idx = ([""] + %w(K M G T P)).index(u.upcase) || exit(1)
+  puts (n.to_f * 1000 ** idx).to_i
+' | ruby - "$size"` \
+  && { pv="$pv -s $size"; echo detected image size: $size bytes; }
+
+echo "uploading image and starting container"
+docker save ${squashed} \
+  | $pv \
+  | xz \
+  | ssh ${host} "unxz | docker load \
+    && docker images ${squashed} \
+    && docker stop ${container} 2>/dev/null \
+     ; docker rm ${container} 2>/dev/null \
+     ; docker run --restart unless-stopped --name ${container} -d ${squashed} \
+    && docker ps --latest"

@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+require 'bankscrap-bbva-net-cash'
+
+user, password, company_code = %w(USER PASSWORD COMPANY_CODE).map do |k|
+  full_key = "BANKSCRAP_" + k
+  ENV[full_key] or raise "missing env var %s" % full_key
+end
+
+bank = Bankscrap::BBVANetCash::Bank.new \
+  user, password,
+  extra_args: {company_code: company_code}
+
+res = bank.accounts.map do |a|
+  { iban: a.iban.to_s,
+    name: a.name.to_s,
+    currency: a.currency.to_s,
+    balance: a.balance.to_f,
+    available_balance: a.available_balance.to_f }
+end
+
+JSON.dump(res, $stdout)

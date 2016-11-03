@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+
+with_test() {
+  while read d; do
+    if [ -f "$d"/*_test.go ]; then
+      echo "$d"
+    fi
+  done
+}
+
+find . -type d -not -path './vendor/*' \
+  | with_test \
+  | exec xargs go test "$@"

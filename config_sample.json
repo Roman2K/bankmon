@@ -1,0 +1,15 @@
+{
+  "db_path": "bankmon.db",
+  "slack": {
+    "bot": "bankmon",
+    "log": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+    "banks": "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+  },
+  "banks": [{
+    "type": "bbva",
+    "name": "BBVA",
+    "user": "123",
+    "password": "secret",
+    "company_code": "123"
+  }]
+}

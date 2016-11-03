@@ -1,0 +1,8 @@
+package: bankmon
+import:
+- package: github.com/boltdb/bolt
+  version: v1.3.0
+- package: github.com/Sirupsen/logrus
+  version: v0.11.0
+- package: github.com/robfig/cron
+  version: v1
